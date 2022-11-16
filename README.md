@@ -1,16 +1,16 @@
-##Project Title
+### Project Title:
 Income Calculator
 
-##Created:
+### Created:
 11/14/2022
 
-##Purpose
+### Purpose:
 To find what days I'm making the most and what my general income is
 
-##Files Used
+### Files Used:
 income_sheet.csv
 
-##Credits
+### Credits:
 
-##Contributors
+### Contributors:
 Tyler Zurcher
