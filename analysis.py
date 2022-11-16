@@ -42,11 +42,29 @@ def filter_getter():
         day = 'all'
     return month, day
 
-
 def reader():
     reader = pd.read_csv('income_sheet.csv')
     data = pd.DataFrame(reader)
     return data
+
+def apply_filter(data, month, day):
+
+    # Empty DF to add in filtered datapoints
+    filteredDF = pd.DataFrame([])
+
+    # Create new DataFrame filtered by month
+    if month == 'all':
+        filteredDF = data[data.Month.isin(months[month])]
+    else:
+        filteredDF = data[data['Month'] == months[month]]
+
+    # Create new DataFrame filtered by month and day
+    if day == 'all':
+        filteredDF = filteredDF[filteredDF.DoW.isin(days[day])]
+    else:
+        filteredDF = filteredDF[filteredDF['DoW'] == days[day]]
+
+    return filteredDF
 
 def format(data):
     data['Date'] = pd.to_datetime(data['Date'])
@@ -55,14 +73,17 @@ def format(data):
 
 def main():
     data = reader()
-    month, day = filter_getter()
-    print(month, day)
+    #month, day = filter_getter()
+    #print(month, day)
     format(data)
-    print(data['Cash Tips'].sum())
-    print(data['Hours'].sum())
-    print(data['Total Income'].sum())
-    print(data)
-
+    print('Entire dataset:\n', data)
+    data = apply_filter(data, 'july', 'friday')
+    print('filtered by function:\n', data)
+    # print(data['Cash Tips'].sum())
+    # print(data['Hours'].sum())
+    # print(data['Total Income'].sum())
+    #print(data.groupby(['Month']).sum())
+    #print(data.groupby(['DoW']).mean())
 
 if __name__ == '__main__':
     main()
