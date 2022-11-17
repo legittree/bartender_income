@@ -72,6 +72,7 @@ def format(data):
     data['Date'] = pd.to_datetime(data['Date'])
     data['DoW'] = pd.DatetimeIndex(data['Date']).dayofweek
     data['Month'] = pd.DatetimeIndex(data['Date']).month
+    data['Week'] = pd.DatetimeIndex(data['Date']).week
     data['Hourly'] = data['Total Income']/data['Hours']
     data['Take Home'] = data['Total Income'] - (data['Total Income'] * tax_percent)
     data['Tax'] = data['Total Income'] - data['Take Home']
@@ -82,6 +83,7 @@ def display_info(data):
     print('Hourly:', data['Hourly'].mean())
     print('Total Cash Tips:', data['Cash Tips'].sum())
     print('Total Hours Worked:', data['Hours'].sum())
+    print('')
     print('Total Take Home Income:', data['Take Home'].sum())
     print('Total Income:', data['Total Income'].sum())
 
@@ -91,6 +93,7 @@ def display_info(data):
     print('Average Pre Tax Income Per Month:', data.groupby(['Month']).sum()['Total Income'].mean())
     print('-'*80, '\n')
     print('Sums by month:\n', data.groupby(['Month']).sum()[['Cash Tips', 'Hours', 'Total Income', 'Take Home', 'Tax']])
+    print(data.groupby(['Week']).mean()[['Cash Tips', 'Take Home']].sort_values(by = ['Cash Tips'], ascending = False))
 
 def main():
     data = reader()
