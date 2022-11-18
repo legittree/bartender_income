@@ -89,6 +89,7 @@ def display_info(data):
 
     # I could conditionally split this off if there is no month filter
     print('Average Monthly Take Home:', data.groupby(['Month']).sum()['Take Home'].mean())
+    print('Average Monthly Cash Tips:', data.groupby(['Month']).sum()['Cash Tips'].mean())
     print('Average Tax Per Month:', data.groupby(['Month']).sum()['Tax'].mean())
     print('Average Pre Tax Income Per Month:', data.groupby(['Month']).sum()['Total Income'].mean())
     print('-'*80, '\n')
