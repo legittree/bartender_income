@@ -93,8 +93,9 @@ def display_info(data):
     print('Average Tax Per Month:', data.groupby(['Month']).sum()['Tax'].mean())
     print('Average Pre Tax Income Per Month:', data.groupby(['Month']).sum()['Total Income'].mean())
     print('-'*80, '\n')
-    print('Sums by month:\n', data.groupby(['Month']).sum()[['Cash Tips', 'Hours', 'Total Income', 'Take Home', 'Tax']])
-    print(data.groupby(['Week']).mean()[['Cash Tips', 'Take Home']].sort_values(by = ['Cash Tips'], ascending = False))
+    #print('Sums by month:\n', data.groupby(['Month']).sum()[['Cash Tips', 'Hours', 'Total Income', 'Take Home', 'Tax']])
+    print('Day of Week Averages\n', data.groupby(['DoW']).mean()[['Cash Tips', 'Hours', 'Total Income']])
+    #print(data.groupby(['Week']).mean()[['Cash Tips', 'Take Home']].sort_values(by = ['Cash Tips'], ascending = False))
 
 def main():
     data = reader()
