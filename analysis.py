@@ -45,9 +45,11 @@ def filter_getter():
     return month, day
 
 def reader():
-    reader = pd.read_csv('income_sheet.csv')
-    data = pd.DataFrame(reader)
-    return data
+    data = pd.read_csv('income_sheet.csv')
+
+    checks = pd.read_excel('paycheck_info.xlsx')
+
+    return data, checks
 
 def apply_filter(data, month, day):
 
@@ -68,14 +70,25 @@ def apply_filter(data, month, day):
 
     return filteredDF
 
-def format(data):
+def format_income_sheet(data):
+
     data['Date'] = pd.to_datetime(data['Date'])
     data['DoW'] = pd.DatetimeIndex(data['Date']).dayofweek
+    data['DoY'] = pd.DatetimeIndex(data['Date']).dayofyear
     data['Month'] = pd.DatetimeIndex(data['Date']).month
     data['Week'] = pd.DatetimeIndex(data['Date']).week
     data['Hourly'] = data['Total Income']/data['Hours']
     data['Take Home'] = data['Total Income'] - (data['Total Income'] * tax_percent)
     data['Tax'] = data['Total Income'] - data['Take Home']
+
+def formate_paycheck_info(checks):
+
+    checks['Period Start'] = pd.to_datetime(checks['Period Start'])
+    checks['Period End'] = pd.to_datetime(checks['Period End'])
+    checks['Start DoY'] = pd.DatetimeIndex(checks['Period Start']).dayofyear
+    checks['End DoY'] = pd.DatetimeIndex(checks['Period End']).dayofyear
+
+    return
 
 def display_info(data):
 
@@ -97,12 +110,30 @@ def display_info(data):
     print('Day of Week Averages\n', data.groupby(['DoW']).mean()[['Cash Tips', 'Hours', 'Total Income']])
     #print(data.groupby(['Week']).mean()[['Cash Tips', 'Take Home']].sort_values(by = ['Cash Tips'], ascending = False))
 
+def made_money(data, checks):
+
+    """ Getting DFs within each pay period """
+
+    new_set = pd.DataFrame()
+
+    for i in range(len(checks.values)):
+        print(i)
+        # Did not append them all together, started fresh for each append
+        test = new_set.append(data[(data['DoY'] > checks['Start DoY'][i]) & (data['DoY'] < checks['End DoY'][i])])
+        i += 1
+        print(test)
+
+    return
+
 def main():
-    data = reader()
+    data, checks = reader()
     #month, day = filter_getter()
-    format(data)
-    data = apply_filter(data, 'all', 'all')
-    display_info(data)
+    format_income_sheet(data)
+    #data = apply_filter(data, 'all', 'all')
+    #display_info(data)
+    formate_paycheck_info(checks)
+    print(checks)
+    made_money(data, checks)
 
 if __name__ == '__main__':
     main()
