@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+pd.options.mode.chained_assignment = None  # default='warn' rids the warning while assigning checks take home tips
+
 months = {'january' : 1,
           'february' : 2,
           'march' : 3,
@@ -76,7 +78,8 @@ def format_income_sheet(data):
     data['DoW'] = pd.DatetimeIndex(data['Date']).dayofweek
     data['DoY'] = pd.DatetimeIndex(data['Date']).dayofyear
     data['Month'] = pd.DatetimeIndex(data['Date']).month
-    data['Week'] = pd.DatetimeIndex(data['Date']).week
+    # isocalendar() is a python function being applied to a pandas series
+    data['Week'] = data['Date'].dt.isocalendar().week
     data['Hourly'] = data['Total Income']/data['Hours']
     data['Take Home'] = data['Total Income'] - (data['Total Income'] * tax_percent)
     data['Tax'] = data['Total Income'] - data['Take Home']
@@ -101,27 +104,37 @@ def display_info(data):
     print('Total Income:', data['Total Income'].sum())
 
     # I could conditionally split this off if there is no month filter
-    print('Average Monthly Take Home:', data.groupby(['Month']).sum()['Take Home'].mean())
-    print('Average Monthly Cash Tips:', data.groupby(['Month']).sum()['Cash Tips'].mean())
-    print('Average Tax Per Month:', data.groupby(['Month']).sum()['Tax'].mean())
-    print('Average Pre Tax Income Per Month:', data.groupby(['Month']).sum()['Total Income'].mean())
+    print('Average Monthly Take Home:', data.groupby(['Month']).sum(numeric_only = True)['Take Home'].mean())
+    print('Average Monthly Cash Tips:', data.groupby(['Month']).sum(numeric_only = True)['Cash Tips'].mean())
+    print('Average Tax Per Month:', data.groupby(['Month']).sum(numeric_only = True)['Tax'].mean())
+    print('Average Pre Tax Income Per Month:', data.groupby(['Month']).sum(numeric_only = True)['Total Income'].mean())
     print('-'*80, '\n')
-    #print('Sums by month:\n', data.groupby(['Month']).sum()[['Cash Tips', 'Hours', 'Total Income', 'Take Home', 'Tax']])
-    print('Day of Week Averages\n', data.groupby(['DoW']).mean()[['Cash Tips', 'Hours', 'Total Income']])
-    #print(data.groupby(['Week']).mean()[['Cash Tips', 'Take Home']].sort_values(by = ['Cash Tips'], ascending = False))
+    print('Sums by month:\n', data.groupby(['Month']).sum(numeric_only = True)[['Cash Tips', 'Hours', 'Total Income', 'Take Home', 'Tax']])
+    print('Average Weekly Hours:', data.groupby(['Week']).sum(numeric_only = True)['Hours'].mean())
+    print('Average Take Home Weekly Income:', data.groupby(['Week']).sum(numeric_only = True)['Take Home'].mean())
+    print('Average Total Weekly Income:', data.groupby(['Week']).sum(numeric_only = True)['Total Income'].mean())
+    print('Day of Week Averages:\n', data.groupby(['DoW']).mean(numeric_only = True)[['Cash Tips', 'Hours', 'Total Income', 'Hourly', 'Take Home']])
+    print(data.groupby(['Week']).mean(numeric_only = True)[['Cash Tips', 'Take Home']].sort_values(by = ['Cash Tips'], ascending = False))
 
 def made_money(data, checks):
 
     """ Getting DFs within each pay period """
 
-    new_set = pd.DataFrame()
+    combo = pd.DataFrame([])
+    checks['Take Home Tips'] = pd.Series([], dtype = 'float64')
 
     for i in range(len(checks.values)):
-        print(i)
-        # Did not append them all together, started fresh for each append
-        test = new_set.append(data[(data['DoY'] > checks['Start DoY'][i]) & (data['DoY'] < checks['End DoY'][i])])
+        # Selects shifts within each pay period (by day of the year only, needs improvement)
+        temp = data[(data['DoY'] > checks['Start DoY'][i]) & (data['DoY'] < checks['End DoY'][i])]
+        # adds Cash Tips sum to the end of each paycheck
+        checks['Take Home Tips'].iloc[[i]] = temp.sum(numeric_only = True)['Cash Tips']
+        combo = pd.concat([temp, combo])
         i += 1
-        print(test)
+        print('TEMP\n', temp)
+
+    useful_checks = checks[['Pay Date', 'Paycheck', 'Cash Tips', 'Total Pay', 'Taxation', 'Total Hours', 'Overtime Hours', 'Regular Hours', 'Take Home Tips']]
+    print(useful_checks)
+    print(combo)
 
     return
 
@@ -132,9 +145,7 @@ def main():
     #data = apply_filter(data, 'all', 'all')
     #display_info(data)
     formate_paycheck_info(checks)
-    print(checks)
     made_money(data, checks)
 
 if __name__ == '__main__':
     main()
-    print('Just to test this out')
