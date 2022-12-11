@@ -47,7 +47,7 @@ def filter_getter():
     return month, day
 
 def reader():
-    data = pd.read_csv('income_sheet.csv')
+    data = pd.read_excel('income_sheet.xlsx')
 
     checks = pd.read_excel('paycheck_info.xlsx')
 
@@ -80,8 +80,8 @@ def format_income_sheet(data):
     data['Month'] = pd.DatetimeIndex(data['Date']).month
     # isocalendar() is a python function being applied to a pandas series
     data['Week'] = data['Date'].dt.isocalendar().week
-    data['Hourly'] = data['Total Income']/data['Hours']
-    data['Take Home'] = data['Total Income'] - (data['Total Income'] * tax_percent)
+    data['Hourly'] = (data['Total Income']/data['Hours']).round(decimals = 2)
+    data['Take Home'] = (data['Total Income'] - (data['Total Income'] * tax_percent)).round(decimals = 2)
     data['Tax'] = data['Total Income'] - data['Take Home']
 
 def formate_paycheck_info(checks):
@@ -116,27 +116,55 @@ def display_info(data):
     print('Day of Week Averages:\n', data.groupby(['DoW']).mean(numeric_only = True)[['Cash Tips', 'Hours', 'Total Income', 'Hourly', 'Take Home']])
     print(data.groupby(['Week']).mean(numeric_only = True)[['Cash Tips', 'Take Home']].sort_values(by = ['Cash Tips'], ascending = False))
 
-def made_money(data, checks):
+def useful_checks(data, checks):
 
     """ Getting DFs within each pay period """
 
-    combo = pd.DataFrame([])
-    checks['Take Home Tips'] = pd.Series([], dtype = 'float64')
+    useful_checks = checks[['Pay Date', 'Paycheck', 'Total Pay', 'Taxation', 'Total Hours', 'Overtime Hours', 'Regular Hours', 'Cash Claim']]
+    useful_checks[['Cash Tips', 'Shifts']] = None
+    combo = None
 
+    # Combine shift and paycheck data to make the useful_checks data
     for i in range(len(checks.values)):
+        
         # Selects shifts within each pay period (by day of the year only, needs improvement)
         temp = data[(data['DoY'] > checks['Start DoY'][i]) & (data['DoY'] < checks['End DoY'][i])]
+        
         # adds Cash Tips sum to the end of each paycheck
-        checks['Take Home Tips'].iloc[[i]] = temp.sum(numeric_only = True)['Cash Tips']
-        combo = pd.concat([temp, combo])
+        useful_checks['Cash Tips'][i] = temp['Cash Tips'].sum()
+        
+        # Count Shifts and add it as column
+        useful_checks['Shifts'][i] = temp['Date'].count()
+
+        # Make a DF of all the shift data within the checks data
+        combo = pd.concat([combo, temp])
+
         i += 1
-        print('TEMP\n', temp)
 
-    useful_checks = checks[['Pay Date', 'Paycheck', 'Cash Tips', 'Total Pay', 'Taxation', 'Total Hours', 'Overtime Hours', 'Regular Hours', 'Take Home Tips']]
-    print(useful_checks)
-    print(combo)
+    # print(useful_checks)
+    # print('Walk with hourly: ', ((useful_checks['Paycheck'] + useful_checks['Cash Tips'])/useful_checks['Total Hours']).mean().round(decimals = 2))
+    # print('Pre Tax hourly: ', ((useful_checks['Total Pay'] + useful_checks['Cash Tips'])/useful_checks['Total Hours']).mean().round(decimals = 2))
 
-    return
+    ##### THIS WRITES THE NEW USEFUL_CHECKS EXCEL SHEET 
+    useful_checks.to_excel('useful_checks.xlsx')
+
+    return useful_checks, combo
+
+def DoW_breakdown(data, useful_checks, combo):
+
+
+    # get cash tip averages from here, but the rest of the needed info from the temp DFs
+    # Note: when calculating the mean, only the cash tips are truly accurate
+    
+
+    # Find total income per DoW
+
+    mean_hours = data['Hours'].groupby(data['DoW']).mean().round(decimals = 2)
+    mean_tips = combo['Cash Tips'].groupby(combo['DoW']).mean().round(decimals = 2)
+    mean_income = mean_tips + (mean_hours * 15)
+    mean_income.index = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    print('Mean Income:\n', mean_income)
+
 
 def main():
     data, checks = reader()
@@ -145,7 +173,52 @@ def main():
     #data = apply_filter(data, 'all', 'all')
     #display_info(data)
     formate_paycheck_info(checks)
-    made_money(data, checks)
+    pay_period, check_shifts = useful_checks(data, checks)
+    DoW_breakdown(data, pay_period, check_shifts)
 
 if __name__ == '__main__':
     main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""
+Info I want:
+
+average total income by DoW
+    total pay period hours + (Delta Hours / # of shifts in pay period) + Cash Tips
+    Won't be perfect but it'll be closer to my DoW income than without redistributing the extra hours
+
+Maybe do the whole thing by month, find the averages of the pay period and extrapolate
+to the month
+
+Calculate take home and pretax income dependant on what shifts I'd take
+
+
+"""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
