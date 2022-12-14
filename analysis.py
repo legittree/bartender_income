@@ -52,13 +52,22 @@ def new_job_getter():
     while new_hours.isnumeric() == False:
         new_hours = input('That wasn\'t right. Try again\n').strip().lower()
     new_weeks_per_year = input('New job\'s weeks worked in a year:\n').strip().lower()
-    while new_weeks_per_year.isnumeric == False:
+    while new_weeks_per_year.isnumeric() == False:
         new_weeks_per_year = input('That wasn\'t right. Try again\n').strip().lower()
 
     cope_shifts = input('Which days will you work at copehouse? Use full day name, or keep blank to use no cope days:\n').strip().lower().split(' ')
-    for day in cope_shifts:
-        while (day not in days) and (day != ''):
-            cope_shifts = input('That wasn\'t right. Try again\n').strip().lower()
+    check = False
+    while check == False:
+        for i in range(len(cope_shifts)):
+            print(i, len(cope_shifts))
+            if (cope_shifts[i] not in days) and (cope_shifts[i] != ''):
+                print('error found')
+                break
+            elif i == (len(cope_shifts) - 1):
+                print('end of list')
+                check = True
+        if check == False:
+            cope_shifts = input('That wasn\'t right. Try again\n').strip().lower().split(' ')
 
     # Annual pay needs to be converted to hourly based on shits and hours worked
     if pay_type == 'annual':
