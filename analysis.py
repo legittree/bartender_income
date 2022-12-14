@@ -30,7 +30,44 @@ days = {'monday' : 0,
 
 tax_percent = 0.273625908
 
-def filter_getter():
+def new_job_getter():
+
+    """ Get what day's I'd still work at cope, and find out hours per week, pay, and weeks per year working """
+
+    print('-_'*80 + '\nEVERYTHING IS PRETAX!!')
+
+    pay_type = input('Is the new job income hourly or annual:\n').strip().lower()
+    while pay_type not in ['hourly', 'annual']:
+        pay_type = input('That wasn\'t right. Try again.\n').strip().lower()
+    if pay_type == 'hourly':
+        new_pay = input('New job\'s hourly pay:\n').strip().lower()
+        while new_pay.isnumeric() == False:
+            new_pay = input('That wasn\'t right. Try again.\n').strip().lower()
+    else:
+        new_pay = input('New job\'s annual pay:\n').strip().lower()
+        while new_pay.isnumeric() == False:
+            new_pay = input('That wasn\'t right. Try again.\n').strip().lower()
+
+    new_hours = input('New job\'s weekly hours:\n').strip().lower()
+    while new_hours.isnumeric() == False:
+        new_hours = input('That wasn\'t right. Try again\n').strip().lower()
+    new_weeks_per_year = input('New job\'s weeks worked in a year:\n').strip().lower()
+    while new_weeks_per_year.isnumeric == False:
+        new_weeks_per_year = input('That wasn\'t right. Try again\n').strip().lower()
+
+    cope_shifts = input('Which days will you work at copehouse? Use full day name, or keep blank to use no cope days:\n').strip().lower().split(' ')
+    for day in cope_shifts:
+        while (day not in days) and (day != ''):
+            cope_shifts = input('That wasn\'t right. Try again\n').strip().lower()
+
+    # Annual pay needs to be converted to hourly based on shits and hours worked
+    if pay_type == 'annual':
+        new_pay = int(new_pay)/(int(new_hours) * int(new_weeks_per_year))
+
+    return new_pay, new_hours, new_weeks_per_year, cope_shifts
+
+
+def income_filter_getter():
     time_filter = input('Filter by time?\n').lower().strip()
     while time_filter not in ['yes', 'no']:
         time_filter = input('Let\'s try that again\n')
@@ -141,10 +178,6 @@ def useful_checks(data, checks):
 
         i += 1
 
-    # print(useful_checks)
-    # print('Walk with hourly: ', ((useful_checks['Paycheck'] + useful_checks['Cash Tips'])/useful_checks['Total Hours']).mean().round(decimals = 2))
-    # print('Pre Tax hourly: ', ((useful_checks['Total Pay'] + useful_checks['Cash Tips'])/useful_checks['Total Hours']).mean().round(decimals = 2))
-
     ##### THIS WRITES THE NEW USEFUL_CHECKS EXCEL SHEET 
     useful_checks.to_excel('useful_checks.xlsx')
 
@@ -152,34 +185,90 @@ def useful_checks(data, checks):
 
 def DoW_breakdown(data, useful_checks, combo):
 
-
-    # get cash tip averages from here, but the rest of the needed info from the temp DFs
-    # Note: when calculating the mean, only the cash tips are truly accurate
-    
-
     # Find total income per DoW
 
-    mean_hours = data['Hours'].groupby(data['DoW']).mean().round(decimals = 2)
-    mean_tips = combo['Cash Tips'].groupby(combo['DoW']).mean().round(decimals = 2)
-    mean_income = mean_tips + (mean_hours * 15)
-    mean_income.index = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-    print('Mean Income:\n', mean_income)
+    mean_hours = data['Hours'].groupby(data['DoW']).mean()
+    mean_tips = combo['Cash Tips'].groupby(combo['DoW']).mean()
+    mean_income = (mean_tips + (mean_hours * 15)).round(decimals = 2)
 
+    means = pd.concat([mean_income, mean_hours], axis = 1)
+    means.columns = ['Income', 'Hours']
+    means.index = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+
+    return means
+
+def income_calculator(new_pay, new_hours, new_weeks_per_year, cope_shifts, means):
+
+    """ This uses my mean income and new job info to figure how much I'd make """
+
+    current_weekly_income = means['Income'].filter(items = ['tuesday', 'wednesday', 'friday', 'saturday', 'sunday']).sum()
+    current_annual_income = current_weekly_income * 52
+    current_weekly_hours = means['Hours'].filter(items = ['tuesday', 'wednesday', 'friday', 'saturday', 'sunday']).sum()
+    current_annual_hours = current_weekly_hours * 52
+
+    new_pay = int(new_pay)
+    new_hours = int(new_hours)
+    new_weeks_per_year = int(new_weeks_per_year)
+
+    cope_weekly_income = means['Income'].filter(items = cope_shifts).sum()
+    cope_annual_income = cope_weekly_income * 52
+    cope_weekly_hours = means['Hours'].filter(items = cope_shifts).sum()
+    cope_annual_hours = cope_weekly_hours * 52
+
+
+    new_weekly_income = new_pay * new_hours
+    new_annual_income = new_weekly_income * new_weeks_per_year
+    new_weekly_hours = new_hours
+    new_annual_hours = new_hours * new_weeks_per_year
+
+    total_weekly = cope_weekly_income + new_weekly_income
+    total_annual = cope_annual_income + new_annual_income
+    total_weekly_hours = new_weekly_hours + cope_weekly_hours
+    total_annual_hours = new_annual_hours + cope_annual_hours
+
+    print('\n')
+    print('#'*80)
+    print('\n')
+
+    print('*** WHAT I MAKE NOW ***\n')
+    print('Current weekly: $', current_weekly_income)
+    print('Current annual: $', current_annual_income.round(decimals = 2))
+    print('Current weekly hours: ', current_weekly_hours.round(decimals = 2))
+    print('Current annual hours: ', current_annual_hours.round(decimals = 2))
+
+    print('CURRENT AVERAGE HOURLY: $', (current_annual_income/current_annual_hours).round(decimals = 2))
+
+    print('\n')
+    print('#'*80)
+    print('\n')
+
+    print('*** WHAT I WOULD MAKE ***\n')
+    print('New weekly: $', total_weekly.round(decimals = 2))
+    print('New annual: $', total_annual.round(decimals = 2))
+    print('New weekly hours: ', total_weekly_hours.round(decimals = 2))
+    print('New annual hours: ', total_annual_hours.round(decimals = 2))
+
+    print('NEW AVERAGE HOURLY: $', (total_annual/total_annual_hours).round(decimals = 2))
+
+    print('\n')
+    print('#'*80)
+    print('\n')
 
 def main():
     data, checks = reader()
-    #month, day = filter_getter()
+    new_pay, new_hours, new_weeks_per_year, cope_shifts = new_job_getter()
     format_income_sheet(data)
-    #data = apply_filter(data, 'all', 'all')
-    #display_info(data)
     formate_paycheck_info(checks)
     pay_period, check_shifts = useful_checks(data, checks)
-    DoW_breakdown(data, pay_period, check_shifts)
+    means = DoW_breakdown(data, pay_period, check_shifts)
+    income_calculator(new_pay, new_hours, new_weeks_per_year, cope_shifts, means)
 
 if __name__ == '__main__':
     main()
 
-
+# '20', '40', '37', ['friday', 'saturday'] school job
+# '40', '40', '52', ['friday', 'saturday'] great job
+# '29', '40', '45', ['friday', 'saturday', 'sunday'] mandy's job
 
 
 
