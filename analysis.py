@@ -59,12 +59,9 @@ def new_job_getter():
     check = False
     while check == False:
         for i in range(len(cope_shifts)):
-            print(i, len(cope_shifts))
             if (cope_shifts[i] not in days) and (cope_shifts[i] != ''):
-                print('error found')
                 break
             elif i == (len(cope_shifts) - 1):
-                print('end of list')
                 check = True
         if check == False:
             cope_shifts = input('That wasn\'t right. Try again\n').strip().lower().split(' ')
