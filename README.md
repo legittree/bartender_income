@@ -11,6 +11,7 @@ This calculates my average total income per day of the week, then prompts me wit
 
 ### Files Used:
 income_sheet.xlsx
+
 useful_checks.xlsx
 
 ### Contributors:
