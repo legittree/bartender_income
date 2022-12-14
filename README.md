@@ -5,12 +5,13 @@ Income Calculator
 11/14/2022
 
 ### Purpose:
-To find what days I'm making the most and what my general income is
+Calculate whether a second job is worth it for me financially.
+
+This calculates my average total income per day of the week, then prompts me with questions about the income and hours for another job. With that information it spits out my current income and hours and my projected income and hours. 
 
 ### Files Used:
-income_sheet.csv
-
-### Credits:
+income_sheet.xlsx
+useful_checks.xlsx
 
 ### Contributors:
 Tyler Zurcher
