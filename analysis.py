@@ -94,7 +94,9 @@ def reader():
 
     checks = pd.read_excel('paycheck_info.xlsx')
 
-    return data, checks
+    current_useful_checks = pd.read_excel('useful_checks.xlsx')
+
+    return data, checks, current_useful_checks
 
 def apply_filter(data, month, day):
 
@@ -159,7 +161,7 @@ def display_info(data):
     print('Day of Week Averages:\n', data.groupby(['DoW']).mean(numeric_only = True)[['Cash Tips', 'Hours', 'Total Income', 'Hourly', 'Take Home']])
     print(data.groupby(['Week']).mean(numeric_only = True)[['Cash Tips', 'Take Home']].sort_values(by = ['Cash Tips'], ascending = False))
 
-def useful_checks(data, checks):
+def useful_checks(data, checks, current_useful_checks):
 
     """ Getting DFs within each pay period """
 
@@ -185,7 +187,10 @@ def useful_checks(data, checks):
         i += 1
 
     ##### THIS WRITES THE NEW USEFUL_CHECKS EXCEL SHEET 
-    useful_checks.to_excel('useful_checks.xlsx')
+    if not current_useful_checks.equals(useful_checks):
+        useful_checks.to_excel('useful_checks.xlsx')
+        print('Updated useful_checks.xlsx')
+        print(current_useful_checks.equals(useful_checks))
 
     return useful_checks, combo
 
@@ -261,11 +266,11 @@ def income_calculator(new_pay, new_hours, new_weeks_per_year, cope_shifts, means
     print('\n')
 
 def main():
-    data, checks = reader()
+    data, checks, current_useful_checks  = reader()
     new_pay, new_hours, new_weeks_per_year, cope_shifts = new_job_getter()
     format_income_sheet(data)
     formate_paycheck_info(checks)
-    pay_period, check_shifts = useful_checks(data, checks)
+    pay_period, check_shifts = useful_checks(data, checks, current_useful_checks)
     means = DoW_breakdown(data, pay_period, check_shifts)
     income_calculator(new_pay, new_hours, new_weeks_per_year, cope_shifts, means)
 
