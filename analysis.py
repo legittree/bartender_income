@@ -52,7 +52,7 @@ def new_job_getter():
     while new_hours.isnumeric() == False:
         new_hours = input('That wasn\'t right. Try again\n').strip().lower()
     new_weeks_per_year = input('New job\'s weeks worked in a year:\n').strip().lower()
-    while new_weeks_per_year.isnumeric() == False:
+    while new_weeks_per_year.isnumeric() == False or int(new_weeks_per_year) > 52:
         new_weeks_per_year = input('That wasn\'t right. Try again\n').strip().lower()
 
     cope_shifts = input('Which days will you work at copehouse? Use full day name, or keep blank to use no cope days:\n').strip().lower().split(' ')
@@ -242,7 +242,7 @@ def income_calculator(new_pay, new_hours, new_weeks_per_year, cope_shifts, means
     print('\n')
 
     print('*** WHAT I MAKE NOW ***\n')
-    print('Current weekly: $', current_weekly_income)
+    print('Current weekly: $', current_weekly_income.round(decimals = 2))
     print('Current annual: $', current_annual_income.round(decimals = 2))
     print('Current weekly hours: ', current_weekly_hours.round(decimals = 2))
     print('Current annual hours: ', current_annual_hours.round(decimals = 2))
@@ -264,6 +264,18 @@ def income_calculator(new_pay, new_hours, new_weeks_per_year, cope_shifts, means
     print('\n')
     print('#'*80)
     print('\n')
+
+    print('*** DIFFERENCES ***\n')
+    print('Change in weekly income: $', (total_weekly - current_weekly_income).round(decimals = 2))
+    print('Change in annaul income: $', (total_annual - current_annual_income).round(decimals = 2))
+    print('change in weekly hours: ', (total_weekly_hours - current_weekly_hours).round(decimals = 2))
+    print('change in annual hours: ', (total_annual_hours - current_annual_hours).round(decimals = 2))
+    print('change in average hourly: $', ((total_annual/total_annual_hours) - (current_annual_income/current_annual_hours)).round(decimals = 2))
+
+    print('\n')
+    print('#'*80)
+    print('\n')
+
 
 def main():
     data, checks, current_useful_checks  = reader()
